@@ -1,6 +1,6 @@
 import math
 
-import tgaimage
+import tgaimage, model
 
 proc line(image: var TGAImage, x0, y0, x1, y1: int, color: TGAColor) =
   var (x0, y0, x1, y1) = (x0, y0, x1, y1)
@@ -27,10 +27,25 @@ let
   white = constructTGAColor(255, 255, 255, 255)
   red = constructTGAColor(255, 0, 0, 255)
 
-var image = constructTGAImage(100, 100, RGB.cint)
-image.line(13, 20, 80, 40, white)
-image.line(20, 13, 40, 80, red)
-image.line(80, 40, 13, 20, red)
+
+const
+  width = 1000
+  height = 1000
+var image = constructTGAImage(width, height, RGB.cint)
+var head = newModel("african_head.obj")
+
+for i in 0 .. <head.nfaces():
+  let face = head.face(i)
+  for j in 0 .. <3:
+    let v0 = head.vert(face[j])
+    let v1 = head.vert(face[j+1] mod 3)
+
+    let x0 = (v0.x+1.0) * width/2
+    let y0 = (v0.y+1.0) * height/2
+    let x1 = (v1.x+1.0) * width/2
+    let y1 = (v1.y+1.0) * height/2
+    image.line(x0.cint, y0.cint, x1.cint, y1.cint, white)
+
 doAssert image.flipVertically()
 doAssert image.writeTgaFile("output.tga")
 
