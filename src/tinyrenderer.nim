@@ -19,9 +19,9 @@ proc line(image: var TGAImage, x0, y0, x1, y1: int, color: TGAColor) =
     let t = (x - x0) / (x1 - x0)
     let y = y0.float * (1.0 - t) + y1.float * t
     if steep:
-      doAssert image.set(y.cint, x.cint, color)
+      discard image.set(y.cint, x.cint, color)
     else:
-      doAssert image.set(x.cint, y.cint, color)
+      discard image.set(x.cint, y.cint, color)
 
 let
   white = constructTGAColor(255, 255, 255, 255)
@@ -29,16 +29,16 @@ let
 
 
 const
-  width = 1000
-  height = 1000
+  width = 800
+  height = 800
 var image = constructTGAImage(width, height, RGB.cint)
-var head = newModel("african_head.obj")
+var head = constructModel("african_head.obj")
 
 for i in 0 .. <head.nfaces():
   let face = head.face(i)
   for j in 0 .. <3:
     let v0 = head.vert(face[j])
-    let v1 = head.vert(face[j+1] mod 3)
+    let v1 = head.vert(face[(j+1) mod 3])
 
     let x0 = (v0.x+1.0) * width/2
     let y0 = (v0.y+1.0) * height/2
