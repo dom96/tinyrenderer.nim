@@ -1,20 +1,46 @@
-{.compile: "model.cpp".}
-import
-  geometry
+import basic3d, streams
+import strutils
+
+import nimasset/obj
 
 type
-  Model* {.importcpp: "Model", header: "model.h".} = object
+  Model* = ref object
+    verts: seq[Vector3d]
+    faces: seq[seq[int]]
 
-type
-  Vector* {.importcpp: "std::vector", header: "model.h".}[T] = object
+proc newModel*(filename: string): Model =
+  var res = Model(
+    verts: @[],
+    faces: @[]
+  )
 
-proc constructModel*(filename: cstring): Model {.constructor, importcpp: "Model(@)",
-    header: "model.h".}
-proc destroyModel*(this: var Model) {.importcpp: "#.~Model()", header: "model.h".}
-proc nverts*(this: var Model): cint {.importcpp: "nverts", header: "model.h".}
-proc nfaces*(this: var Model): cint {.importcpp: "nfaces", header: "model.h".}
-proc vert*(this: var Model; i: cint): Vec3f {.importcpp: "vert", header: "model.h".}
-proc face*(this: var Model; idx: cint): Vector[cint] {.importcpp: "face",
-    header: "model.h".}
+  var loader: ObjLoader
+  new loader
 
-proc `[]`*[T](vec: Vector[T], i: int): T {.importcpp: "#[@]", header: "model.h".}
+  let fs = newFileStream(filename)
+
+  proc addVertex(x, y, z: float) =
+    res.verts.add(vector3d(x, y, z))
+
+  proc addTexture(u, v, w: float) =
+    discard
+
+  proc addFace(vi0, vi1, vi2, ti0, ti1, ti2, ni0, ni1, ni2: int) =
+    res.faces.add(@[
+      vi0, vi1, vi2, ti0, ti1, ti2, ni0, ni1, ni2
+    ])
+
+  loadMeshData(loader, fs, addVertex, addTexture, addFace)
+  return res
+
+proc nfaces*(model: Model): int =
+  model.faces.len
+
+proc nverts*(model: Model): int =
+  model.verts.len
+
+proc face*(model: Model, i: int): seq[int] =
+  model.faces[i]
+
+proc vert*(model: Model, i: int): Vector3d =
+  model.verts[i]

@@ -32,7 +32,7 @@ const
   width = 800
   height = 800
 var image = constructTGAImage(width, height, RGB.cint)
-var head = constructModel("african_head.obj")
+var head = newModel("african_head.obj")
 
 for i in 0 .. <head.nfaces():
   let face = head.face(i)
