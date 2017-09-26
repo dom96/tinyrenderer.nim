@@ -72,3 +72,5 @@ proc get_bytespp*(this: var TGAImage): cint {.importcpp: "get_bytespp",
     header: "tgaimage.h".}
 proc buffer*(this: var TGAImage): ptr cuchar {.importcpp: "buffer", header: "tgaimage.h".}
 proc clear*(this: var TGAImage) {.importcpp: "clear", header: "tgaimage.h".}
+
+converter toCint*(x: int): cint = x.cint
