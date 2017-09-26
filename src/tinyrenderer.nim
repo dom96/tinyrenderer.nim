@@ -1,4 +1,4 @@
-import math, basic2d, random
+import math, basic2d, random, basic3d
 
 import tgaimage, model
 
@@ -65,19 +65,28 @@ const
 var image = constructTGAImage(width, height, RGB.cint)
 
 var head = newModel("african_head.obj")
-randomize()
 # Shading.
+let lightDir = vector3d(0, 0, -1)
 for i in 0 .. <head.nfaces():
   let face = head.face(i)
   var screenCoords: array[3, Vector2D]
+  var worldCoords: array[3, Vector3D]
   for j in 0 .. <3:
-    let worldCoords = head.vert(face[j])
+    worldCoords[j] = head.vert(face[j])
     screenCoords[j] = vector2d(
-      (worldCoords.x+1)*width / 2,
-      (worldCoords.y+1)*height / 2
+      (worldCoords[j].x+1)*width / 2,
+      (worldCoords[j].y+1)*height / 2
     )
-  image.triangle(screenCoords[0], screenCoords[1], screenCoords[2],
-                 constructTGAColor(random(255), random(255), random(255), 255))
+
+  var product = cross(worldCoords[2]-worldCoords[0],
+                      world_coords[1]-world_coords[0])
+  product.normalize()
+  let intensity = dot(product, lightDir)
+
+  if intensity > 0:
+    image.triangle(screenCoords[0], screenCoords[1], screenCoords[2],
+                   constructTGAColor(int(132*intensity), int(84*intensity),
+                                     int(62*intensity), 255))
 
 # Wireframe
 when false:
