@@ -32,32 +32,38 @@ proc line(image: var TGAImage, x0, y0, x1, y1: int, color: TGAColor) =
 proc line(image: var TGAImage, a, b: Vector2d, color: TGAColor) =
   image.line(a.x.int, a.y.int, b.x.int, b.y.int, color)
 
+proc barycentric(t0, t1, t2: Vector2d, P: Vector2d): Vector3d =
+  let u = cross(vector3d(t2.x-t0.x, t1.x-t0.x, t0.x-P.x),
+                vector3d(t2.y-t0.y, t1.y-t0.y, t0.y-P.y))
+  if abs(u.z) < 1:
+    # Triangle is degenerate.
+    return vector3d(-1, 1, 1)
+
+  return vector3d(1.0 - (u.x+u.y) / u.z, u.y / u.z, u.x / u.z)
+
 proc triangle(image: var TGAImage, t0, t1, t2: Vector2d, color: TGAColor) =
-  var (t0, t1, t2) = (t0, t1, t2)
-  # Sort the vertices from lower-to-upper y.
-  if t0.y > t1.y: swap(t0, t1)
-  if t0.y > t2.y: swap(t0, t2)
-  if t1.y > t2.y: swap(t1, t2)
+  var minBoundingBox, clamp = vector2d(image.getWidth().float-1,
+                                       image.getHeight().float-1)
 
-  let totalHeight = t2.y - t0.y
-  template fillSegment(a, b) =
-    for y in countup(a.y, b.y, 1.0):
-      let segmentHeight = b.y - a.y
-      let alpha = (y.float - t0.y) / totalHeight
-      let beta = (y.float - a.y) / segmentHeight
-      var A = t0 + (t2-t0)*alpha
-      var B = a + (b-a)*beta
+  var maxBoundingBox = vector2d(0, 0)
 
-      if A.x > B.x: swap(A, B)
-      for x in countup(A.x, B.x):
-        discard image.set(x.cint, y.cint, color)
+  template getBounds(vec: Vector2d) =
+    minBoundingBox.x = max(0, min(minBoundingBox.x, vec.x))
+    maxBoundingBox.x = min(clamp.x, max(maxBoundingBox.x, vec.x))
 
-  fillSegment(t0, t1)
-  fillSegment(t1, t2)
-  image.line(t0, t1, color)
-  image.line(t1, t2, color)
-  image.line(t2, t0, color)
+    minBoundingBox.y = max(0, min(minBoundingBox.y, vec.y))
+    maxBoundingBox.y = min(clamp.x, max(maxBoundingBox.y, vec.y))
 
+  getBounds(t0)
+  getBounds(t1)
+  getBounds(t2)
+
+  for x in countup(minBoundingBox.x, maxBoundingBox.x):
+    for y in countup(minBoundingBox.y, maxBoundingBox.y):
+      let bcScreen = barycentric(t0, t1, t2, vector2d(x.float, y.float))
+      if bcScreen.x < 0 or bcScreen.y < 0 or bcScreen.z < 0:
+        continue
+      doAssert image.set(x.cint, y.cint, color)
 
 const
   width = 800
